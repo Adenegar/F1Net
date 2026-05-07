@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>F1Net.Web</RootNamespace>
+    <UserSecretsId>f1net-web-dev</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\F1Net.Application\F1Net.Application.csproj" />
+    <ProjectReference Include="..\F1Net.Infrastructure\F1Net.Infrastructure.csproj" />
+    <ProjectReference Include="..\F1Net.Auth\F1Net.Auth.csproj" />
+  </ItemGroup>
+</Project>
