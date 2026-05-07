@@ -1,11 +1,13 @@
 using F1Net.Application.Abstractions;
 using F1Net.Domain.Common;
 using F1Net.Domain.Entities;
+using F1Net.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace F1Net.Infrastructure.Persistence;
 
-public class F1NetDbContext : DbContext, IF1NetDbContext
+public class F1NetDbContext : IdentityDbContext<ApplicationUser>, IF1NetDbContext
 {
     public F1NetDbContext(DbContextOptions<F1NetDbContext> options) : base(options) { }
 
@@ -24,6 +26,7 @@ public class F1NetDbContext : DbContext, IF1NetDbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(F1NetDbContext).Assembly);
+        modelBuilder.UseOpenIddict();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

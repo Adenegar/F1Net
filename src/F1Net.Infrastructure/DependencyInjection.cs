@@ -16,8 +16,11 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Missing connection string 'F1Net'.");
 
         services.AddDbContext<F1NetDbContext>(options =>
+        {
             options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(F1NetDbContext).Assembly.FullName)));
+                sql.MigrationsAssembly(typeof(F1NetDbContext).Assembly.FullName));
+            options.UseOpenIddict();
+        });
 
         services.AddScoped<IF1NetDbContext>(sp => sp.GetRequiredService<F1NetDbContext>());
 
