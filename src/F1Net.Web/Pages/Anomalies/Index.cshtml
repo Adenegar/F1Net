@@ -1,0 +1,21 @@
+@page
+@model F1Net.Web.Pages.Anomalies.IndexModel
+@{ ViewData["Title"] = "Anomalies"; }
+
+<h1>Recent Anomalies</h1>
+<p>Pick a session from <a asp-page="/Sessions/Index">Sessions</a> to see flagged laps.</p>
+
+<table class="data">
+    <thead><tr><th>When</th><th>Race</th><th>Session</th><th>Anomalies</th></tr></thead>
+    <tbody>
+    @foreach (var s in Model.Sessions.Where(x => x.AnomalyCount > 0))
+    {
+        <tr>
+            <td>@s.StartUtc?.ToLocalTime().ToString("yyyy-MM-dd")</td>
+            <td>@s.RaceName</td>
+            <td><a asp-page="/Sessions/Details" asp-route-id="@s.Id">@s.Name</a></td>
+            <td>@s.AnomalyCount</td>
+        </tr>
+    }
+    </tbody>
+</table>

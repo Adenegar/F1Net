@@ -1,0 +1,21 @@
+@page
+@model F1Net.Web.Pages.Sessions.IndexModel
+@{ ViewData["Title"] = "Sessions"; }
+
+<h1>Sessions</h1>
+<table class="data">
+    <thead><tr><th>When</th><th>Race</th><th>Session</th><th>Laps</th><th>Anomalies</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var s in Model.Sessions)
+    {
+        <tr>
+            <td>@s.StartUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+            <td>@s.RaceName</td>
+            <td>@s.Name (@s.Type)</td>
+            <td>@s.LapCount</td>
+            <td>@s.AnomalyCount</td>
+            <td><a asp-page="/Sessions/Details" asp-route-id="@s.Id">View</a></td>
+        </tr>
+    }
+    </tbody>
+</table>

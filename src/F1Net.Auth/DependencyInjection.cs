@@ -24,7 +24,8 @@ public static class DependencyInjection
                 opt.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<F1NetDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddDefaultUI();
 
         services.Configure<IdentityOptions>(options =>
         {

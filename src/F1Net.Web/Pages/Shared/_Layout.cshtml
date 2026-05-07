@@ -1,0 +1,41 @@
+@using Microsoft.AspNetCore.Identity
+@using F1Net.Infrastructure.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - F1Net</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand"><a asp-page="/Index">F1Net</a></div>
+        <nav>
+            <a asp-page="/Index">Dashboard</a>
+            <a asp-page="/Sessions/Index">Sessions</a>
+            <a asp-page="/Anomalies/Index">Anomalies</a>
+        </nav>
+        <div class="user">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <span>@User.Identity?.Name</span>
+                <form asp-area="Identity" asp-page="/Account/Logout" method="post" style="display:inline">
+                    <button type="submit" class="link">Sign out</button>
+                </form>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
+            }
+        </div>
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -34,14 +34,22 @@ scripts/
 - .NET 8 SDK (`brew install --cask dotnet-sdk` or https://dot.net)
 - A SQL Server instance:
   - Windows: SQL Server LocalDB (default connection string)
-  - macOS/Linux: `docker run -e ACCEPT_EULA=Y -e SA_PASSWORD=Your_password123 -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest` and update the connection string
+  - macOS/Linux: `docker run -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<your-strong-password>' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest` and provide the password via user-secrets (see below)
 
 ## Configuration secrets (user-secrets, never committed)
 
 ```
-dotnet user-secrets set "Authentication:Google:ClientId"     "..." --project src/F1Net.Web
-dotnet user-secrets set "Authentication:Google:ClientSecret" "..." --project src/F1Net.Web
-dotnet user-secrets set "OpenF1:ApiKey"                      "..." --project src/F1Net.Web
+# DB connection (override the placeholder password)
+dotnet user-secrets set "ConnectionStrings:F1Net" \
+  "Server=localhost,1433;Database=F1Net;User Id=sa;Password=<your-strong-password>;TrustServerCertificate=True;MultipleActiveResultSets=true" \
+  --project src/F1Net.Web
+
+# Google OAuth (only needed for Google sign-in)
+dotnet user-secrets set "Auth:Google:ClientId"     "..." --project src/F1Net.Web
+dotnet user-secrets set "Auth:Google:ClientSecret" "..." --project src/F1Net.Web
+
+# OpenIddict client secret used by the PowerShell sync script
+dotnet user-secrets set "Auth:Sync:ClientSecret" "$(openssl rand -hex 32)" --project src/F1Net.Web
 ```
 
 ## Run

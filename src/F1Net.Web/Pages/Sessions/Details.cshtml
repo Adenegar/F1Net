@@ -1,0 +1,36 @@
+@page "{id:int}"
+@model F1Net.Web.Pages.Sessions.DetailsModel
+@{ ViewData["Title"] = $"Session {Model.SessionId}"; }
+
+<h1>@Model.Header</h1>
+
+<div class="card">
+    <h2>Anomalies</h2>
+    <table class="data">
+        <thead><tr><th>Lap</th><th>Driver</th><th>Severity</th><th>Score</th><th>Reason</th></tr></thead>
+        <tbody>
+        @foreach (var a in Model.Anomalies)
+        {
+            <tr>
+                <td>@a.LapNumber</td>
+                <td>@a.DriverName</td>
+                <td class="sev-@a.Severity">@a.Severity</td>
+                <td>@a.Score.ToString("F2")</td>
+                <td>@a.Reason</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Driver Pace</h2>
+    <label>Driver ID: <input id="driverId" type="number" value="0" /></label>
+    <button id="loadPace">Load</button>
+    <canvas id="pace-chart" height="120"></canvas>
+</div>
+
+@section Scripts {
+    <script src="~/js/session-details.js" asp-append-version="true"></script>
+    <script>F1Net.SessionDetails.init(@Model.SessionId);</script>
+}
