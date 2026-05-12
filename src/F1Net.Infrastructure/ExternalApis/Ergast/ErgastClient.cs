@@ -23,7 +23,7 @@ public class ErgastClient : IErgastClient
             r.Circuit?.Location?.Country ?? "",
             r.Circuit?.Location?.Locality ?? "",
             ParseDate(r.Date, r.Time))).ToList();
-        return new ErgastSeason(year, $"https://ergast.com/api/f1/{year}", races);
+        return new ErgastSeason(year, new Uri(_http.BaseAddress!, $"{year}").ToString(), races);
     }
 
     public async Task<IReadOnlyList<ErgastStanding>> GetDriverStandingsAsync(int year, CancellationToken ct)

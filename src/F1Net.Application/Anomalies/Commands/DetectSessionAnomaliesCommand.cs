@@ -15,7 +15,7 @@ public class DetectSessionAnomaliesHandler : IRequestHandler<DetectSessionAnomal
     private readonly IF1NetDbContext _db;
     private readonly ILapAnomalyDetector _detector;
     private readonly ILogger<DetectSessionAnomaliesHandler> _log;
-    private const string DetectorName = "RandomizedPCA-v1";
+    private const string DetectorName = "ZScore-v1";
 
     public DetectSessionAnomaliesHandler(IF1NetDbContext db, ILapAnomalyDetector detector, ILogger<DetectSessionAnomaliesHandler> log)
     {
@@ -45,16 +45,21 @@ public class DetectSessionAnomaliesHandler : IRequestHandler<DetectSessionAnomal
         )).ToList();
 
         var results = _detector.Detect(features);
-        var written = 0;
-        var existingLapIds = await _db.AnomalyFlags
-            .Where(f => f.SessionId == req.SessionId && f.DetectorName == DetectorName)
-            .Select(f => f.LapId)
-            .ToListAsync(ct);
-        var existingSet = existingLapIds.ToHashSet();
 
+        var stale = await _db.AnomalyFlags
+            .Where(f => f.SessionId == req.SessionId && f.DetectorName == DetectorName)
+            .ToListAsync(ct);
+        if (stale.Count > 0) _db.AnomalyFlags.RemoveRange(stale);
+
+        var driverMeans = features
+            .GroupBy(f => f.DriverId)
+            .ToDictionary(g => g.Key, g => g.Average(f => f.LapTimeSeconds));
+        var lapById = laps.ToDictionary(l => l.Id);
+
+        var written = 0;
         foreach (var r in results.Where(x => x.IsAnomaly))
         {
-            if (existingSet.Contains(r.LapId)) continue;
+            var lap = lapById[r.LapId];
             _db.AnomalyFlags.Add(new AnomalyFlag
             {
                 SessionId = req.SessionId,
@@ -62,7 +67,7 @@ public class DetectSessionAnomaliesHandler : IRequestHandler<DetectSessionAnomal
                 DetectorName = DetectorName,
                 Severity = ScoreToSeverity(r.Score),
                 Score = r.Score,
-                Reason = $"PCA reconstruction error {r.Score:F3}",
+                DriverMeanLapTime = TimeSpan.FromSeconds(driverMeans[lap.DriverId]),
                 DetectedUtc = DateTimeOffset.UtcNow,
             });
             written++;

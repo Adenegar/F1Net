@@ -1,5 +1,6 @@
 bin/
 obj/
+logs/
 [Dd]ebug/
 [Rr]elease/
 x64/

@@ -1,72 +1,59 @@
 using F1Net.Application.Abstractions;
 using F1Net.Application.Anomalies.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.ML;
-using Microsoft.ML.Data;
 
 namespace F1Net.Infrastructure.Ml;
 
 public class RandomizedPcaLapDetector : ILapAnomalyDetector
 {
     private readonly ILogger<RandomizedPcaLapDetector> _log;
-    private readonly MLContext _ml = new(seed: 42);
-    private const double AnomalyThreshold = 0.65;
+    private const double ZScoreThreshold = 2.5;
+    private const int MinLapsPerDriver = 5;
 
     public RandomizedPcaLapDetector(ILogger<RandomizedPcaLapDetector> log) => _log = log;
 
     public IReadOnlyList<LapAnomalyResult> Detect(IReadOnlyList<LapFeature> features)
     {
-        if (features.Count < 10) return Array.Empty<LapAnomalyResult>();
+        if (features.Count == 0) return Array.Empty<LapAnomalyResult>();
 
-        var rows = features.Select(f => new LapInput
+        var results = new List<LapAnomalyResult>(features.Count);
+
+        foreach (var driverGroup in features.GroupBy(f => f.DriverId))
         {
-            LapId = f.LapId,
-            Features = new[]
+            var laps = driverGroup.ToList();
+            if (laps.Count < MinLapsPerDriver)
             {
-                (float)f.LapTimeSeconds,
-                (float)f.Sector1Seconds,
-                (float)f.Sector2Seconds,
-                (float)f.Sector3Seconds,
-                (float)f.TyreAgeLaps,
+                foreach (var l in laps) results.Add(new LapAnomalyResult(l.LapId, 0, false));
+                continue;
             }
-        }).ToList();
 
-        var data = _ml.Data.LoadFromEnumerable(rows);
-        var rank = Math.Min(2, rows[0].Features.Length - 1);
-        var pipeline = _ml.Transforms.NormalizeMeanVariance(nameof(LapInput.Features))
-            .Append(_ml.AnomalyDetection.Trainers.RandomizedPca(
-                featureColumnName: nameof(LapInput.Features),
-                rank: rank,
-                ensureZeroMean: true));
+            var times = laps.Select(l => l.LapTimeSeconds).ToArray();
+            var mean = times.Average();
+            var variance = times.Sum(t => (t - mean) * (t - mean)) / times.Length;
+            var stdDev = Math.Sqrt(variance);
 
-        ITransformer model;
-        try { model = pipeline.Fit(data); }
-        catch (Exception ex) { _log.LogWarning(ex, "PCA training failed"); return Array.Empty<LapAnomalyResult>(); }
+            if (stdDev < 1e-6)
+            {
+                foreach (var l in laps) results.Add(new LapAnomalyResult(l.LapId, 0, false));
+                continue;
+            }
 
-        var transformed = model.Transform(data);
-        var preds = _ml.Data.CreateEnumerable<LapPrediction>(transformed, reuseRowObject: false).ToList();
-
-        var results = new List<LapAnomalyResult>(preds.Count);
-        for (var i = 0; i < preds.Count; i++)
-        {
-            var p = preds[i];
-            var score = double.IsFinite(p.Score) ? p.Score : 0;
-            var isAnomaly = p.PredictedLabel || score > AnomalyThreshold;
-            results.Add(new LapAnomalyResult(rows[i].LapId, score, isAnomaly));
+            foreach (var l in laps)
+            {
+                var z = Math.Abs(l.LapTimeSeconds - mean) / stdDev;
+                results.Add(new LapAnomalyResult(l.LapId, z, z > ZScoreThreshold));
+            }
         }
+
+        var flagged = results.Count(r => r.IsAnomaly);
+        if (results.Count > 0)
+        {
+            var sorted = results.Select(r => r.Score).OrderBy(s => s).ToArray();
+            _log.LogInformation(
+                "Z-score over {N} laps: median={Med:F2} p90={P90:F2} max={Max:F2} flagged={Flagged}",
+                sorted.Length, sorted[sorted.Length / 2], sorted[(int)(sorted.Length * 0.9)], sorted[^1], flagged);
+        }
+
         return results;
-    }
-
-    private sealed class LapInput
-    {
-        public int LapId { get; set; }
-        [VectorType(5)]
-        public float[] Features { get; set; } = Array.Empty<float>();
-    }
-
-    private sealed class LapPrediction
-    {
-        [ColumnName("PredictedLabel")] public bool PredictedLabel { get; set; }
-        public float Score { get; set; }
     }
 }

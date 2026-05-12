@@ -1,10 +1,10 @@
 using F1Net.Application;
+using F1Net.Application.Anomalies.Commands;
 using F1Net.Auth;
 using F1Net.Auth.Controllers;
 using F1Net.Infrastructure;
 using F1Net.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -12,7 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
-    .WriteTo.Console());
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("System.Net.Http", Serilog.Events.LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/f1net-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
 builder.Services
     .AddF1NetApplication()
@@ -23,20 +32,9 @@ builder.Services
     .AddControllers()
     .AddApplicationPart(typeof(AuthorizationController).Assembly);
 
-var fallbackPolicy = new AuthorizationPolicyBuilder()
-    .RequireAuthenticatedUser()
-    .Build();
+builder.Services.AddRazorPages();
 
-builder.Services.AddRazorPages(opt =>
-{
-    opt.Conventions.AuthorizeFolder("/");
-    opt.Conventions.AllowAnonymousToAreaFolder("Identity", "/Account");
-});
-
-builder.Services.AddAuthorization(opt =>
-{
-    opt.FallbackPolicy = fallbackPolicy;
-});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -65,6 +63,24 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<F1NetDbContext>();
     await db.Database.MigrateAsync();
+
+    var sessionsToBackfill = await db.Sessions
+        .Where(s => s.Laps.Any())
+        .Select(s => s.Id)
+        .ToListAsync();
+
+    if (sessionsToBackfill.Count > 0)
+    {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        log.LogInformation("Anomaly backfill: rebuilding flags for {Count} session(s)", sessionsToBackfill.Count);
+        foreach (var sid in sessionsToBackfill)
+        {
+            try { await mediator.Send(new DetectSessionAnomaliesCommand(sid)); }
+            catch (Exception ex) { log.LogWarning(ex, "Backfill detection failed for session {Sid}", sid); }
+        }
+        log.LogInformation("Anomaly backfill complete");
+    }
 }
 
 app.Run();

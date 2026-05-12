@@ -2,14 +2,12 @@ using F1Net.Application.Anomalies.Queries;
 using F1Net.Application.Drivers.Queries;
 using F1Net.Application.Sessions.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace F1Net.Web.Controllers.Api;
 
 [ApiController]
 [Route("api/sessions")]
-[Authorize]
 public class SessionsApiController : ControllerBase
 {
     private readonly IMediator _mediator;

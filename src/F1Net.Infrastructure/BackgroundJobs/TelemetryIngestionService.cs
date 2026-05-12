@@ -25,10 +25,6 @@ public class TelemetryIngestionService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // small delay so app finishes startup (migrations, seeders) before first run
-        try { await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken); }
-        catch (OperationCanceledException) { return; }
-
         while (!stoppingToken.IsCancellationRequested)
         {
             var opt = _options.CurrentValue;

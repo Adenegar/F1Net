@@ -36,7 +36,7 @@ scripts/
   - Windows: SQL Server LocalDB (default connection string)
   - macOS/Linux: `docker run -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<your-strong-password>' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest` and provide the password via user-secrets (see below)
 
-## Configuration secrets (user-secrets, never committed)
+## Configuration secrets 
 
 ```
 # DB connection (override the placeholder password)

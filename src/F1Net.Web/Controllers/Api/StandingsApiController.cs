@@ -1,13 +1,11 @@
 using F1Net.Application.Standings.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace F1Net.Web.Controllers.Api;
 
 [ApiController]
 [Route("api/standings")]
-[Authorize]
 public class StandingsApiController : ControllerBase
 {
     private readonly IMediator _mediator;

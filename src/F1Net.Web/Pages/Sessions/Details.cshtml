@@ -7,7 +7,7 @@
 <div class="card">
     <h2>Anomalies</h2>
     <table class="data">
-        <thead><tr><th>Lap</th><th>Driver</th><th>Severity</th><th>Score</th><th>Reason</th></tr></thead>
+        <thead><tr><th>Lap #</th><th>Driver</th><th>Severity</th><th>Score</th><th>Lap</th><th>Driver Mean</th></tr></thead>
         <tbody>
         @foreach (var a in Model.Anomalies)
         {
@@ -16,12 +16,24 @@
                 <td>@a.DriverName</td>
                 <td class="sev-@a.Severity">@a.Severity</td>
                 <td>@a.Score.ToString("F2")</td>
-                <td>@a.Reason</td>
+                <td>@FormatTime(a.LapTime)</td>
+                <td>@FormatTime(a.DriverMeanLapTime)</td>
             </tr>
         }
         </tbody>
     </table>
 </div>
+
+@functions {
+    static string FormatTime(TimeSpan? t)
+    {
+        if (t is null) return "";
+        var v = t.Value;
+        return v.TotalMinutes >= 1
+            ? $"{(int)v.TotalMinutes}:{v.Seconds:D2}.{v.Milliseconds:D3}"
+            : $"{v.TotalSeconds:F3}s";
+    }
+}
 
 <div class="card">
     <h2>Driver Pace</h2>

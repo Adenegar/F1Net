@@ -15,6 +15,7 @@ public class AnomalyFlag : BaseEntity, IAuditable
     public required FlagSeverity Severity { get; set; }
     public required double Score { get; set; }
     public string? Reason { get; set; }
+    public TimeSpan? DriverMeanLapTime { get; set; }
     public DateTimeOffset DetectedUtc { get; set; }
 
     public DateTimeOffset CreatedUtc { get; set; }

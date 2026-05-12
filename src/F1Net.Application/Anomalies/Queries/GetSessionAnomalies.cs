@@ -5,7 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace F1Net.Application.Anomalies.Queries;
 
-public record AnomalyDto(int LapId, int LapNumber, string DriverName, FlagSeverity Severity, double Score, string? Reason);
+public record AnomalyDto(
+    int LapId,
+    int LapNumber,
+    string DriverName,
+    FlagSeverity Severity,
+    double Score,
+    TimeSpan? LapTime,
+    TimeSpan? DriverMeanLapTime);
 
 public record GetSessionAnomaliesQuery(int SessionId) : IRequest<IReadOnlyList<AnomalyDto>>;
 
@@ -25,7 +32,8 @@ public class GetSessionAnomaliesHandler : IRequestHandler<GetSessionAnomaliesQue
                 f.Lap.Driver.FullName,
                 f.Severity,
                 f.Score,
-                f.Reason))
+                f.Lap.LapTime,
+                f.DriverMeanLapTime))
             .ToListAsync(ct);
     }
 }
