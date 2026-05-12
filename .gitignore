@@ -21,6 +21,7 @@ appsettings.Local.json
 secrets/
 *.pfx
 *.p12
+.playwright-mcp/
 TestResults/
 [Tt]est[Rr]esult*/
 *.trx

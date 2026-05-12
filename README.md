@@ -2,6 +2,17 @@
 
 Personal F1 analytics web app: live + historical telemetry ingestion, lap anomaly detection, and a dashboard for standings and per-driver pace.
 
+## Screenshots
+
+### Dashboard — driver standings & recent sessions
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Anomalies — flagged laps across the season
+![Anomalies](docs/screenshots/anomalies.png)
+
+### Session details — per-lap pace and anomaly scores
+![Session details](docs/screenshots/session-details.png)
+
 ## Stack
 
 - ASP.NET Core 8 (MVC + Web API + Razor Pages)
@@ -59,7 +70,3 @@ dotnet restore
 dotnet ef database update --project src/F1Net.Infrastructure --startup-project src/F1Net.Web
 dotnet run --project src/F1Net.Web
 ```
-
-## Phases
-
-This project is being built phase-by-phase. See task list in conversation; current phase: 1 (skeleton).
