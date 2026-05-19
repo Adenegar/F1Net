@@ -19,7 +19,7 @@ Personal F1 analytics web app: live + historical telemetry ingestion, lap anomal
 - SQL Server LocalDB (Windows) or SQL Server in Docker (cross-platform) + EF Core 8
 - ASP.NET Core Identity + OpenIddict 5 (OIDC) with Google external login
 - Chart.js for charts (vendored under `wwwroot/lib`, no npm)
-- ML.NET (Randomized PCA) for unsupervised lap anomaly detection
+- Z-score statistical analysis (driver-specific lap time standard deviation) for unsupervised lap anomaly detection
 - Serilog for logging
 - Polly for HTTP resilience
 
